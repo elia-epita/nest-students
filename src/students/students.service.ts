@@ -5,6 +5,7 @@ import { Repository } from 'typeorm';
 import { CreateStudentDto } from './dto/create-student.dto';
 import { Course } from './entities/course.entity';
 import { UpdateStudentDto } from './dto/update-student.dto';
+import { PaginationQueryDto } from './dto/pagination-query.dto';
 
 @Injectable()
 export class StudentsService {
@@ -15,11 +16,15 @@ export class StudentsService {
     private readonly courseRepository: Repository<Course>,
   ) {}
 
-  findAll() {
+  findAll(paginationQueryDto: PaginationQueryDto) {
+    const { offset, limit } = paginationQueryDto;
+    console.log(typeof offset);
     return this.studentRepository.find({
       relations: {
         courses: true,
       },
+      skip: offset,
+      take: limit,
     });
   }
 
