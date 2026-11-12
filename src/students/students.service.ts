@@ -6,6 +6,8 @@ import { CreateStudentDto } from './dto/create-student.dto';
 import { Course } from './entities/course.entity';
 import { UpdateStudentDto } from './dto/update-student.dto';
 import { PaginationQueryDto } from './dto/pagination-query.dto';
+import { DataSource } from 'typeorm';
+import { Event } from './entities/event.entity';
 
 @Injectable()
 export class StudentsService {
@@ -14,6 +16,7 @@ export class StudentsService {
     private readonly studentRepository: Repository<Student>,
     @InjectRepository(Course)
     private readonly courseRepository: Repository<Course>,
+    private readonly dataSource: DataSource,
   ) {}
 
   findAll(paginationQueryDto: PaginationQueryDto) {
@@ -86,5 +89,31 @@ export class StudentsService {
       return existingCourse;
     }
     return this.courseRepository.create({ name });
+  }
+
+  async recommendStudent(student: Student) {
+    const queryRunner = this.dataSource.createQueryRunner();
+
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      student.recommendations++;
+
+      const recommendEvent = new Event();
+      recommendEvent.name = 'recommend_event';
+      recommendEvent.type = 'student';
+      recommendEvent.payload = { studentId: student.id };
+
+      await queryRunner.manager.save(student);
+      await queryRunner.manager.save(recommendEvent);
+
+      await queryRunner.commitTransaction();
+    } catch (err) {
+      console.log(err);
+      await queryRunner.rollbackTransaction();
+    } finally {
+      await queryRunner.release();
+    }
   }
 }
