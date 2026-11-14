@@ -8,6 +8,7 @@ import { UpdateStudentDto } from './dto/update-student.dto';
 import { PaginationQueryDto } from './dto/pagination-query.dto';
 import { DataSource } from 'typeorm';
 import { Event } from './entities/event.entity';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class StudentsService {
@@ -17,7 +18,11 @@ export class StudentsService {
     @InjectRepository(Course)
     private readonly courseRepository: Repository<Course>,
     private readonly dataSource: DataSource,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    const dbHost = this.configService.get<string>('DATABASE_HOST');
+    console.log(dbHost);
+  }
 
   findAll(paginationQueryDto: PaginationQueryDto) {
     const { offset, limit } = paginationQueryDto;
